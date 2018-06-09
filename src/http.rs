@@ -52,7 +52,7 @@ struct PingRequest {
     protocol: Option<Protocol>,
     count: Option<usize>,
     ping_timeout: Option<u64>,
-    dns_timeout: Option<u64>,
+    resolve_timeout: Option<u64>,
 }
 
 struct App {
@@ -156,10 +156,10 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
         return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too large ping timeout"))))
     }
 
-    let dns_timeout = request.dns_timeout.unwrap_or(settings.dns_timeout);
+    let resolve_timeout = request.resolve_timeout.unwrap_or(settings.resolve_timeout);
 
-    if dns_timeout > settings.dns_timeout {
-        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too large dns timeout"))))
+    if resolve_timeout > settings.resolve_timeout {
+        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too large resolve timeout"))))
     }
 
     let mut protocol = request.protocol.unwrap_or(settings.protocol);
@@ -171,7 +171,7 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
 
     let name = request.target;
 
-    let future = pinger.ping(name.clone(), protocol, count, dns_timeout, ping_timeout);
+    let future = pinger.ping(name.clone(), protocol, count, resolve_timeout, ping_timeout);
     let future = future.map_err(|error| {
         (StatusCode::OK, Body::from(format!("{}", error)))
     });
@@ -183,7 +183,7 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
             .labeled("protocol", protocol)
             .labeled("count", count)
             .labeled("ping_timeout", ping_timeout)
-            .labeled("dns_timeout", dns_timeout)
+            .labeled("resolve_timeout", resolve_timeout)
             .labeled("ip", ip);
 
         metrics.gauge("ping_resolve_time", "Resolve time").set((resolve_time_ns / 1000000) as usize);

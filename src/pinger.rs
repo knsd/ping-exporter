@@ -63,12 +63,12 @@ impl Pinger {
         }))
     }
 
-    pub fn ping(&self, name: NameOrIpAddr, protocol: Protocol, count: usize, dns_timeout: u64, timeout: u64) -> impl Future<Item=(u64, IpAddr, Vec<Option<f64>>), Error=Error> {
-        let dns_timeout = Duration::from_millis(dns_timeout);
+    pub fn ping(&self, name: NameOrIpAddr, protocol: Protocol, count: usize, resolve_timeout: u64, timeout: u64) -> impl Future<Item=(u64, IpAddr, Vec<Option<f64>>), Error=Error> {
+        let resolve_timeout = Duration::from_millis(resolve_timeout);
         let timeout = Duration::from_millis(timeout);
 
         let future = self.inner.resolver.resolve(name, protocol);
-        let future = Deadline::new(future, Instant::now() + dns_timeout);
+        let future = Deadline::new(future, Instant::now() + resolve_timeout);
         let future = future.map_err(|err| match err.into_inner() {
             Some(err) => err.into(),
             None => Error::ResolveTimeoutError {}

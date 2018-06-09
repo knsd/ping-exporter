@@ -27,8 +27,8 @@ pub struct SettingsInner {
     pub max_count: usize,
     pub ping_timeout: u64,
     pub max_ping_timeout: u64,
-    pub dns_timeout: u64,
-    pub max_dns_timeout: u64,
+    pub resolve_timeout: u64,
+    pub max_resolve_timeout: u64,
 }
 
 impl Settings {
@@ -41,8 +41,8 @@ impl Settings {
                 max_count: get_env_or("MAX_COUNT", 30)?,
                 ping_timeout: get_env_or("DEFAULT_PING_TIMEOUT", 1000)?,
                 max_ping_timeout: get_env_or("MAX_PING_TIMEOUT", 10000)?,
-                dns_timeout: get_env_or("DEFAULT_DNS_TIMEOUT", 1000)?,
-                max_dns_timeout: get_env_or("MAX_DNS_TIMEOUT", 10000)?,
+                resolve_timeout: get_env_or("DEFAULT_RESOLVE_TIMEOUT", 1000)?,
+                max_resolve_timeout: get_env_or("MAX_RESOLVE_TIMEOUT", 10000)?,
             })
         })
     }
