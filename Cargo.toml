@@ -1,0 +1,31 @@
+[package]
+name = "ping-exporter"
+version = "0.1.0"
+authors = ["Fedor Gogolev <knsd@knsd.net>"]
+
+[dependencies]
+failure = "0.1"
+futures = "0.1"
+hyper = "0.12"
+lazy_static = "1.0"
+log = "0.4"
+rand = "0.4"
+serde = "1.0"
+serde_derive = "1.0"
+serde_urlencoded = "0.5"
+slog = "2.1"
+slog-async = "2.2"
+slog-term = "2.3"
+slog-stdlog = "3.0"
+slog-scope = "4.0"
+time = "0.1"
+tokio = "0.1"
+trust-dns-resolver = "0.9"
+
+[dependencies.tacho]
+git = "https://github.com/knsd/tacho.git"
+rev = "210055fbb78ed76bcc2480c5efd7b042e61c5b32"
+
+[dependencies.tokio-ping]
+git = "https://github.com/knsd/tokio-ping.git"
+rev = "9d1456a037ec3fb472dcd25f03723398515881c4"
