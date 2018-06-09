@@ -1,0 +1,11 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+notifications:
+    webhooks:
+        - http://heimdallr.mournival.net/travis
+script:
+  - cargo build -vv
+  - cargo test --verbose
