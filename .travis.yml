@@ -4,8 +4,8 @@ rust:
   - beta
   - nightly
 notifications:
-    webhooks:
-        - http://heimdallr.mournival.net/travis
+  webhooks:
+    - http://heimdallr.mournival.net/travis
 script:
   - cargo build -vv
   - cargo test --verbose
