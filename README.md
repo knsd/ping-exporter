@@ -6,7 +6,7 @@
 ### Local Build
 
     make
-    ./ping-exporter <flags>
+    ./ping-exporter
 
 Visiting [http://localhost:9345/ping?target=google.com](http://localhost:9345/ping?target=google.com) will return metrics for an ICMP ping against google.com. 
 
