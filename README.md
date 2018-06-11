@@ -13,7 +13,7 @@ Visiting [http://localhost:9345/ping?target=google.com](http://localhost:9345/pi
 ### Building with Docker
 
     docker build -t ping-exporter .
-    docker run -d -p 9315:9315 --name ping-exporter
+    docker run -d -p 9315:9315 --name=ping-exporter ping-exporter
 
 ## Settings
 
