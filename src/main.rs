@@ -22,10 +22,10 @@ extern crate tokio_signal;
 use futures::{Future, Stream};
 use futures::sync::oneshot;
 use futures::future::Either;
+use slog::Drain;
 use tokio_signal::unix::{Signal, SIGTERM, SIGINT};
 
 mod http;
-mod logging;
 mod metrics;
 mod pinger;
 mod resolver;
@@ -47,8 +47,10 @@ fn signals() -> impl Future<Item=i32, Error=::std::io::Error> {
 }
 
 fn run() -> i32 {
-    let log = logging::init();
-
+    let decorator = ::slog_term::PlainDecorator::new(::std::io::stdout());
+    let drain = ::slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = ::slog_async::Async::new(drain).chan_size(4096).build().fuse();
+    let log = slog::Logger::root(drain, o!());
     let _scope_guard = slog_scope::set_global_logger(log.new(o!()));
     slog_stdlog::init().expect("Init std logger");
 
