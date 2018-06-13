@@ -39,7 +39,7 @@ Visiting [http://localhost:9345/ping?target=google.com](http://localhost:9345/pi
 | ping_packets_success | gauge     | Total number of success pings                          |
 | ping_packets_failed  | gauge     | Total number of failed pings                           |
 | ping_packets_loss    | gauge     | A percentage of failed pings from the total pings      |
-| ping_times           | histogram | Various response times including min/max/avg rtt times |
+| ping_times           | histogram | A histogram of round-trip times                        |
 
 ### `/metrics` endpoint
 

@@ -197,9 +197,11 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
 }
 
 pub fn set_metrics(metrics: &tacho::Scope, resolve_time_ns: u64, pings: Vec<Option<f64>>) {
-    metrics.gauge("ping_resolve_time", "Resolve time").set((resolve_time_ns / 1000000) as usize);
+    metrics.gauge("ping_resolve_time",
+                  "Time it take to resolve domain to an IP address")
+        .set((resolve_time_ns / 1000000) as usize);
 
-    let times = metrics.stat("ping_times", "Response times");
+    let times = metrics.stat("ping_times", "A histogram of round-trip times");
 
     let mut failures = 0;
     let mut successful = 0;
@@ -217,13 +219,18 @@ pub fn set_metrics(metrics: &tacho::Scope, resolve_time_ns: u64, pings: Vec<Opti
         }
     }
 
-    metrics.gauge("ping_packets_total", "Total packets").set(total);
-    metrics.gauge("ping_packets_success", "Sucessful pings").set(successful);
-    metrics.gauge("ping_packets_failed", "Failed ping").set(failures);
+    metrics.gauge("ping_packets_total", "Total number of sent pings")
+        .set(total);
+    metrics.gauge("ping_packets_success", "Total number of success pings")
+        .set(successful);
+    metrics.gauge("ping_packets_failed", "Total number of failed pings")
+        .set(failures);
 
     if total > 0 {
         let loss = failures as f64 / total as f64 * 100.0;
-        metrics.gauge("ping_packets_loss", "Packets loss percents").set(loss as usize);
+        metrics.gauge("ping_packets_loss",
+                      "A percentage of failed pings from the total pings")
+            .set(loss as usize);
     }
 }
 
