@@ -1,4 +1,5 @@
 use std::env;
+use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -17,6 +18,20 @@ lazy_static! {
 #[derive(Debug, Clone)]
 pub struct Settings {
     inner: Arc<SettingsInner>
+}
+
+impl fmt::Display for Settings {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "listen address: {}, ", self.listen)?;
+        write!(f, "preferred protocol: {}, ", self.protocol)?;
+        write!(f, "default number of ICMP packets: {}, ", self.count)?;
+        write!(f, "maximum number of ICMP packets: {}, ", self.max_count)?;
+        write!(f, "timeout for each ICMP packet: {} ms, ", self.ping_timeout)?;
+        write!(f, "maximum timeout for each ICMP packet: {} ms, ", self.max_ping_timeout)?;
+        write!(f, "resolve timeout: {} ms, ", self.resolve_timeout)?;
+        write!(f, "maximum resolve timeout: {} ms.", self.max_resolve_timeout)?;
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

@@ -227,6 +227,7 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
 pub fn server(settings: Settings, pinger: Pinger) -> impl Future<Item=(), Error=()> {
     let builder = Server::try_bind(&settings.listen);
     let future = future::result(builder).and_then(move |builder| {
+        info!("Listening on {}", &settings.listen);
         builder.serve(NewApp { settings, pinger })
     });
     let future = future.map_err(|error| {

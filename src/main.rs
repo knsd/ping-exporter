@@ -52,6 +52,8 @@ fn run() -> i32 {
     let _scope_guard = slog_scope::set_global_logger(log.new(o!()));
     slog_stdlog::init().expect("Init std logger");
 
+    info!(concat!("Starting ", env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION")));
+
     let settings = match settings::Settings::from_env() {
         Ok(settings) => settings,
         Err(err) => {
@@ -60,10 +62,11 @@ fn run() -> i32 {
         }
     };
 
+    info!("Using settings: {}", settings);
+
     http::init();
     metrics::init();
 
-    info!("Started");
     let mut runtime = tokio::runtime::Runtime::new().expect("Tokio runtime");
     let (stop_sender, stop_receiver) = oneshot::channel();
 
