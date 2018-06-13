@@ -17,8 +17,12 @@ extern crate time;
 extern crate tokio;
 extern crate tokio_ping;
 extern crate trust_dns_resolver;
+extern crate tokio_signal;
 
-use futures::Future;
+use futures::{Future, Stream};
+use futures::sync::oneshot;
+use futures::future::Either;
+use tokio_signal::unix::{Signal, SIGTERM, SIGINT};
 
 mod http;
 mod logging;
@@ -27,6 +31,20 @@ mod pinger;
 mod resolver;
 mod settings;
 mod utils;
+
+fn signals() -> impl Future<Item=i32, Error=::std::io::Error> {
+    futures::future::select_all((&[SIGTERM, SIGINT]).iter().map(|&signum| {
+        Signal::new(signum).flatten_stream().into_future()
+            .map(|(signum, _rest)| signum)
+            .map_err(|(err, _rest)| err)
+    })).then(|res| {
+        match res {
+            Ok((Some(signum), _, _)) => Ok(signum),
+            Err((err, _, _)) => Err(err),
+            Ok((None, _, _)) => unreachable!("signals")
+        }
+    })
+}
 
 fn run() -> i32 {
     let log = logging::init();
@@ -46,15 +64,33 @@ fn run() -> i32 {
     metrics::init();
 
     info!("Started");
+    let mut runtime = tokio::runtime::Runtime::new().expect("Tokio runtime");
+    let (stop_sender, stop_receiver) = oneshot::channel();
 
-    tokio::run(futures::lazy(move || {
-        pinger::Pinger::new().map_err(|_| {
+    runtime.spawn(futures::lazy(move || {
+
+        let server_future = pinger::Pinger::new().map_err(|_| {
             error!("Unable to create pinger, please check capabilities");
         }).and_then(move |pinger| {
             http::server(settings, pinger)
+        });
+
+        let signals_future = signals().map_err(|_| {
+            error!("Signal handling error");
+        });
+
+        signals_future.select2(server_future).then(move |res| {
+            if let Ok(Either::A((signum, _))) = res {
+                info!("Got signal {}.", signum)
+            }
+            stop_sender.send(()).ok();
+            Ok(())
         })
     }));
 
+    stop_receiver.wait().ok();
+    runtime.shutdown_now().wait().ok();
+    info!("Exiting");
     0
 }
 

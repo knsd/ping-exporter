@@ -21,6 +21,7 @@ slog-scope = "4.0"
 time = "0.1"
 tokio = "0.1"
 trust-dns-resolver = "0.9"
+tokio-signal = "0.2.1"
 
 [dependencies.tacho]
 git = "https://github.com/knsd/tacho.git"
