@@ -134,32 +134,34 @@ impl Service for App {
 }
 
 fn get_metrics() -> impl Future<Item=Body, Error=((StatusCode, Body))> {
-    match tacho::prometheus::string(&REPORTER.peek()) {
-        Err(_) => future::err((StatusCode::INTERNAL_SERVER_ERROR, Body::from("Internal Error"))),
-        Ok(s) => future::ok(Body::from(s)),
-    }
+    future::result(format_metrics(&REPORTER.peek()))
 }
 
 fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future<Item=Body, Error=((StatusCode, Body))> {
     let count = request.count.unwrap_or(settings.count);
-    if count > settings.max_count {
-        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too many pings"))))
-    }
-
-    if count < 1 {
-        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too few pings"))))
-    }
-
     let ping_timeout = request.ping_timeout.unwrap_or(settings.ping_timeout);
-
-    if ping_timeout > settings.max_ping_timeout {
-        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too large ping timeout"))))
-    }
-
     let resolve_timeout = request.resolve_timeout.unwrap_or(settings.resolve_timeout);
 
-    if resolve_timeout > settings.resolve_timeout {
-        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from("Too large resolve timeout"))))
+    let bad_request_body = {
+        if count > settings.max_count {
+            Some("Too many pings")
+        } else if count < 1 {
+            Some("Too few pings")
+        } else if ping_timeout > settings.max_ping_timeout {
+            Some("Too large ping timeout")
+        } else if ping_timeout < 5 {
+            Some("Too small ping timeout")
+        } else if resolve_timeout > settings.resolve_timeout {
+            Some("Too large resolve timeout")
+        } else if resolve_timeout < 5 {
+            Some("Too small resolve timeout")
+        } else {
+            None
+        }
+    };
+
+    if let Some(body) = bad_request_body {
+        return boxed(future::err((StatusCode::BAD_REQUEST, Body::from(body))))
     }
 
     let mut protocol = request.protocol.unwrap_or(settings.protocol);
@@ -186,42 +188,50 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
             .labeled("resolve_timeout", resolve_timeout)
             .labeled("ip", ip);
 
-        metrics.gauge("ping_resolve_time", "Resolve time").set((resolve_time_ns / 1000000) as usize);
+        set_metrics(&metrics, resolve_time_ns, pings);
 
-        let times = metrics.stat("ping_times", "Response times");
-
-        let mut failures = 0;
-        let mut successful = 0;
-        let total = pings.len();
-
-        for reply_time in pings {
-            match reply_time {
-                Some(reply_time) => {
-                    times.add((reply_time * 1000.0) as u64);
-                    successful += 1;
-                },
-                None => {
-                    failures += 1;
-                }
-            }
-        }
-
-        metrics.gauge("ping_packets_total", "Total packets").set(total);
-        metrics.gauge("ping_packets_success", "Sucessful pings").set(successful);
-        metrics.gauge("ping_packets_failed", "Failed ping").set(failures);
-
-        if total > 0 {
-            let loss = failures as f64 / total as f64 * 100.0;
-            metrics.gauge("ping_packets_loss", "Packets loss percents").set(loss as usize);
-        }
-
-        match tacho::prometheus::string(&reporter.peek()) {
-            Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Body::from("Internal Error"))),
-            Ok(s) => Ok(Body::from(s)),
-        }
+        format_metrics(&reporter.peek())
     });
 
     boxed(future)
+}
+
+pub fn set_metrics(metrics: &tacho::Scope, resolve_time_ns: u64, pings: Vec<Option<f64>>) {
+    metrics.gauge("ping_resolve_time", "Resolve time").set((resolve_time_ns / 1000000) as usize);
+
+    let times = metrics.stat("ping_times", "Response times");
+
+    let mut failures = 0;
+    let mut successful = 0;
+    let total = pings.len();
+
+    for reply_time in pings {
+        match reply_time {
+            Some(reply_time) => {
+                times.add((reply_time * 1000.0) as u64);
+                successful += 1;
+            },
+            None => {
+                failures += 1;
+            }
+        }
+    }
+
+    metrics.gauge("ping_packets_total", "Total packets").set(total);
+    metrics.gauge("ping_packets_success", "Sucessful pings").set(successful);
+    metrics.gauge("ping_packets_failed", "Failed ping").set(failures);
+
+    if total > 0 {
+        let loss = failures as f64 / total as f64 * 100.0;
+        metrics.gauge("ping_packets_loss", "Packets loss percents").set(loss as usize);
+    }
+}
+
+fn format_metrics(report: &tacho::Report) -> Result<Body, (StatusCode, Body)> {
+    match tacho::prometheus::string(report) {
+        Ok(s) => Ok(Body::from(s)),
+        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Body::from("Internal Error"))),
+    }
 }
 
 pub fn server(settings: Settings, pinger: Pinger) -> impl Future<Item=(), Error=()> {
