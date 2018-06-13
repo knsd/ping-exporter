@@ -47,9 +47,10 @@ fn signals() -> impl Future<Item=i32, Error=::std::io::Error> {
 }
 
 fn run() -> i32 {
-    let decorator = ::slog_term::PlainDecorator::new(::std::io::stdout());
-    let drain = ::slog_term::CompactFormat::new(decorator).build().fuse();
-    let drain = ::slog_async::Async::new(drain).chan_size(4096).build().fuse();
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).chan_size(4096).build().fuse();
+    let drain = slog::LevelFilter::new(drain, slog::Level::Info).fuse();
     let log = slog::Logger::root(drain, o!());
     let _scope_guard = slog_scope::set_global_logger(log.new(o!()));
     slog_stdlog::init().expect("Init std logger");

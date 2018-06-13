@@ -124,9 +124,9 @@ impl Service for App {
             let delta = ::time::precise_time_ns() - st;
             let delta_ms = delta / 1000000;
             if let Some(path_and_query) = req.uri().path_and_query() {
-                info!("{} {} {}ms", req.method(), path_and_query, delta_ms);
+                info!("{} {} {} ms", req.method(), path_and_query, delta_ms);
             } else {
-                info!("{} {} {}ms", req.method(), req.uri().path(), delta_ms);
+                info!("{} {} {} ms", req.method(), req.uri().path(), delta_ms);
             }
             resp
         }))
