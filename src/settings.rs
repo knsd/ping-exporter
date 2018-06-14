@@ -11,7 +11,7 @@ static ENV_PREFIX: &str = "PING_EXPORTER";
 static ENV_SEPARATOR: &str = "_";
 
 lazy_static! {
-    static ref DEFAULT_LISTEN: SocketAddr = SocketAddr::from_str("[::]:9345")
+    static ref DEFAULT_LISTEN: SocketAddr = SocketAddr::from_str("[::]:9346")
         .expect("DEFAULT_LISTEN");
 }
 

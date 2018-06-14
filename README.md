@@ -8,18 +8,18 @@
     make
     ./ping-exporter
 
-Visiting [http://localhost:9345/ping?target=google.com](http://localhost:9345/ping?target=google.com) will return metrics for an ICMP ping against google.com. 
+Visiting [http://localhost:9346/ping?target=google.com](http://localhost:9346/ping?target=google.com) will return metrics for an ICMP ping against google.com.
 
 ### Building with Docker
 
     docker build -t ping-exporter .
-    docker run -d -p 9345:9345 --name=ping-exporter ping-exporter
+    docker run -d -p 9346:9346 --name=ping-exporter ping-exporter
 
 ## Settings
 
 | Environment variable                   | Default Value |
 | -------------------------------------- | ------------- |
-| PING_EXPORTER_LISTEN                   | [::]:9345     |
+| PING_EXPORTER_LISTEN                   | [::]:9346     |
 | PING_EXPORTER_DEFAULT_PROTOCOL         | v4            |
 | PING_EXPORTER_DEFAULT_COUNT            | 5             |
 | PING_EXPORTER_MAX_COUNT                | 30            |
@@ -65,7 +65,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: 127.0.0.1:9345 # This exporter's real hostname:port
+        replacement: 127.0.0.1:9346 # This exporter's real hostname:port
 ```
 
 In addition to that you can scrape the /metrics endpoint to be able to monitor exporter's own statistics.
@@ -76,5 +76,5 @@ scrape_configs:
   - job_name: 'ping_exporter'
     static_configs:
       - targets:
-        - 127.0.0.1:9345 # This exporter's real hostname:port
+        - 127.0.0.1:9346 # This exporter's real hostname:port
 ```
