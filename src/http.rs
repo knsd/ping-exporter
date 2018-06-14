@@ -7,7 +7,7 @@ use serde_urlencoded;
 use tacho;
 
 use metrics::{METRICS, REPORTER};
-use pinger::Pinger;
+use pinger::{Pinger, Error as PingerError};
 use settings::Settings;
 use utils::{Protocol, NameOrIpAddr, boxed};
 
@@ -175,7 +175,13 @@ fn ping(request: PingRequest, settings: Settings, pinger: Pinger) -> impl Future
 
     let future = pinger.ping(name.clone(), protocol, count, resolve_timeout, ping_timeout);
     let future = future.map_err(|error| {
-        (StatusCode::OK, Body::from(format!("{}", error)))
+        let body = Body::from(match error {
+            PingerError::ResolveError {..} => "Unable to resolve",
+            PingerError::ResolveTimeoutError {..} => "Resolve timeout",
+            PingerError::PingError {..} => "Internal error",
+        });
+        (StatusCode::INTERNAL_SERVER_ERROR, body)
+
     });
 
     let future = future.and_then(move |(resolve_time_ns, ip, pings)| {
