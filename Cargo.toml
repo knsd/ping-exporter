@@ -20,13 +20,10 @@ slog-stdlog = "3.0"
 slog-scope = "4.0"
 time = "0.1"
 tokio = "0.1"
+tokio-ping = "0.2.0"
 trust-dns-resolver = "0.9"
 tokio-signal = "0.2.1"
 
 [dependencies.tacho]
 git = "https://github.com/knsd/tacho.git"
 rev = "210055fbb78ed76bcc2480c5efd7b042e61c5b32"
-
-[dependencies.tokio-ping]
-git = "https://github.com/knsd/tokio-ping.git"
-rev = "9d1456a037ec3fb472dcd25f03723398515881c4"
