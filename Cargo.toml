@@ -2,6 +2,7 @@
 name = "ping-exporter"
 version = "0.1.0"
 authors = ["Fedor Gogolev <knsd@knsd.net>"]
+publish = false
 
 [dependencies]
 failure = "0.1"
