@@ -32,14 +32,15 @@ Visiting [http://localhost:9346/ping?target=google.com](http://localhost:9346/pi
 
 ### `/ping` endpoint
 
-| Metric name          | Type      | Description                                            |
-| -------------------- | --------- | ------------------------------------------------------ |
-| ping_resolve_time    | gauge     | Time it take to resolve domain to an IP address        |
-| ping_packets_total   | gauge     | Total number of sent pings                             |
-| ping_packets_success | gauge     | Total number of success pings                          |
-| ping_packets_failed  | gauge     | Total number of failed pings                           |
-| ping_packets_loss    | gauge     | A percentage of failed pings from the total pings      |
-| ping_times           | histogram | A histogram of round-trip times                        |
+| Metric name          | Type      | Description                                                                                    |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------------- |
+| ping_resolve_error   | gauge     | Boolean metric if there's an error during the resolve (error message will be in "error" label) |
+| ping_resolve_time    | gauge     | Time it take to resolve domain to an IP address                                                |
+| ping_packets_total   | gauge     | Total number of sent pings                                                                     |
+| ping_packets_success | gauge     | Total number of success pings                                                                  |
+| ping_packets_failed  | gauge     | Total number of failed pings                                                                   |
+| ping_packets_loss    | gauge     | A percentage of failed pings from the total pings                                              |
+| ping_times           | histogram | A histogram of round-trip times                                                                |
 
 ### `/metrics` endpoint
 

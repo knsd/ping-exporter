@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use futures::Future;
-use serde::{Deserialize, Deserializer, de::Error as SerdeDeError};
+use serde::{de::Error as SerdeDeError, Deserialize, Deserializer};
 use trust_dns_resolver::Name;
 
 #[derive(Debug, Clone, Copy)]
@@ -31,16 +31,15 @@ impl FromStr for Protocol {
             "v6" => Ok(Protocol::V6),
             other => Err(format!("'{}' is not valid protocol, use v4 or v6", other)),
         }
-
     }
 }
 
 impl<'de> Deserialize<'de> for Protocol {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
-        Protocol::from_str(String::deserialize(deserializer)?.as_str())
-            .map_err(D::Error::custom)
+        Protocol::from_str(String::deserialize(deserializer)?.as_str()).map_err(D::Error::custom)
     }
 }
 
@@ -63,20 +62,24 @@ impl FromStr for NameOrIpAddr {
     type Err = <Name as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        IpAddr::from_str(s).map(|addr| NameOrIpAddr::IpAddr(addr))
+        IpAddr::from_str(s)
+            .map(|addr| NameOrIpAddr::IpAddr(addr))
             .or_else(|_| Ok(NameOrIpAddr::Name(Arc::new(Name::from_str(s)?))))
     }
 }
 
 impl<'de> Deserialize<'de> for NameOrIpAddr {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         NameOrIpAddr::from_str(String::deserialize(deserializer)?.as_str())
-            .map_err(|_|D::Error::custom("Invalid hostname or IP addr"))
+            .map_err(|_| D::Error::custom("Invalid hostname or IP addr"))
     }
 }
 
-pub fn boxed<F: Future<Item=I, Error=E> + Send + 'static, I, E>(future: F) -> Box<Future<Item=I, Error=E> + Send> {
+pub fn boxed<F: Future<Item = I, Error = E> + Send + 'static, I, E>(
+    future: F,
+) -> Box<Future<Item = I, Error = E> + Send> {
     Box::new(future)
 }

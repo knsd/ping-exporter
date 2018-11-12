@@ -1,7 +1,7 @@
-use tacho::{Scope, Reporter, self};
+use tacho::{self, Reporter, Scope};
 
 lazy_static! {
-    static ref __T : (Scope, Reporter) = tacho::new();
+    static ref __T: (Scope, Reporter) = tacho::new();
     pub static ref METRICS: Scope = __T.0.clone();
     pub static ref REPORTER: Reporter = __T.1.clone();
 }
