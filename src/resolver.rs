@@ -1,16 +1,16 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use futures::{future, Future};
-use rand::{thread_rng, Rng};
-use trust_dns_resolver::config::{self, ResolverConfig, NameServerConfig, ResolverOpts};
+use rand::{seq::SliceRandom, thread_rng};
+use trust_dns_resolver::config::{self, NameServerConfig, ResolverConfig, ResolverOpts};
 use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
-use trust_dns_resolver::ResolverFuture;
+use trust_dns_resolver::AsyncResolver;
 
 use settings::Settings;
 use utils::{boxed, NameOrIpAddr, Protocol};
 
 pub struct Resolver {
-    inner: ResolverFuture,
+    inner: AsyncResolver,
 }
 
 #[derive(Debug, Fail)]
@@ -23,7 +23,7 @@ pub enum Error {
 
 impl From<ResolveError> for Error {
     fn from(err: ResolveError) -> Self {
-        if let ResolveErrorKind::NoRecordsFound(_) = err.kind() {
+        if let ResolveErrorKind::NoRecordsFound { .. } = err.kind() {
             Error::NotFound
         } else {
             Error::Error
@@ -41,10 +41,15 @@ impl Resolver {
                     protocol: config::Protocol::Udp,
                     tls_dns_name: None,
                 });
-                Ok(ResolverFuture::new(config, ResolverOpts::default()))
-            },
-            None => ResolverFuture::from_system_conf(),
-        }).flatten();
+                let (client, future) = AsyncResolver::new(config, ResolverOpts::default());
+                tokio::spawn(future);
+                Ok(client)
+            }
+            None => AsyncResolver::from_system_conf().map(|(client, future)| {
+                tokio::spawn(future);
+                client
+            }),
+        });
 
         future
             .map_err(From::from)
@@ -63,23 +68,24 @@ impl Resolver {
                 let future = match protocol {
                     Protocol::V4 => boxed(
                         self.inner
-                            .ipv4_lookup(name.as_ref())
+                            .ipv4_lookup(name.as_ref().clone())
                             .map_err(From::from)
                             .and_then(|addrs| {
                                 let addrs: Vec<Ipv4Addr> = addrs.iter().cloned().collect();
+
                                 let random_addr =
-                                    thread_rng().choose(&addrs).ok_or(Error::NotFound)?;
+                                    addrs.choose(&mut thread_rng()).ok_or(Error::NotFound)?;
                                 Ok(IpAddr::from(random_addr.clone()))
                             }),
                     ),
                     Protocol::V6 => boxed(
                         self.inner
-                            .ipv6_lookup(name.as_ref())
+                            .ipv6_lookup(name.as_ref().clone())
                             .map_err(From::from)
                             .and_then(|addrs| {
                                 let addrs: Vec<Ipv6Addr> = addrs.iter().cloned().collect();
                                 let random_addr =
-                                    thread_rng().choose(&addrs).ok_or(Error::NotFound)?;
+                                    addrs.choose(&mut thread_rng()).ok_or(Error::NotFound)?;
 
                                 Ok(IpAddr::from(random_addr.clone()))
                             }),

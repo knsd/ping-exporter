@@ -113,10 +113,7 @@ impl Service for App {
                 *response.status_mut() = status_code;
                 future::ok(response)
             }
-            Ok(body) => {
-                let mut response = Response::new(body);
-                future::ok(response)
-            }
+            Ok(body) => future::ok(Response::new(body)),
         });
 
         boxed(future.then(move |resp| {
@@ -218,7 +215,8 @@ pub fn set_metrics(mut metrics: tacho::Scope, report: Report) {
                 .gauge(
                     "ping_resolve_time",
                     "Time it take to resolve domain to an IP address",
-                ).set((resolve_time_ns / 1000000) as usize);
+                )
+                .set((resolve_time_ns / 1000000) as usize);
 
             let times = metrics.stat("ping_times", "A histogram of round-trip times");
 
@@ -254,7 +252,8 @@ pub fn set_metrics(mut metrics: tacho::Scope, report: Report) {
                     .gauge(
                         "ping_packets_loss",
                         "A percentage of failed pings from the total pings",
-                    ).set(loss as usize);
+                    )
+                    .set(loss as usize);
             }
         }
     };

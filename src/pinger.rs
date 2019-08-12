@@ -1,10 +1,10 @@
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use futures::future::{ok, Either};
 use futures::{future, Future, Stream};
-use tokio::timer::Deadline;
+use tokio::timer::Timeout;
 use tokio_ping::{Error as PingError, Pinger as LowLevelPinger};
 
 use resolver::{Error as ResolveError, Resolver};
@@ -77,7 +77,7 @@ impl Pinger {
         let timeout = Duration::from_millis(timeout);
 
         let future = self.inner.resolver.resolve(name, protocol);
-        let future = Deadline::new(future, Instant::now() + resolve_timeout);
+        let future = Timeout::new(future, resolve_timeout);
 
         let pinger = self.inner.pinger.clone();
         let future = future.then(move |result| match result {

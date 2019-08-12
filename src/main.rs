@@ -1,3 +1,5 @@
+#![recursion_limit = "128"]
+
 #[macro_use]
 extern crate failure;
 extern crate futures;
@@ -44,7 +46,8 @@ fn signals() -> impl Future<Item = i32, Error = ::std::io::Error> {
             .into_future()
             .map(|(signum, _rest)| signum)
             .map_err(|(err, _rest)| err)
-    })).then(|res| match res {
+    }))
+    .then(|res| match res {
         Ok((Some(signum), _, _)) => Ok(signum),
         Err((err, _, _)) => Err(err),
         Ok((None, _, _)) => unreachable!("signals"),
@@ -87,7 +90,8 @@ fn run() -> i32 {
         let server_future = pinger::Pinger::new(settings.clone())
             .map_err(|_| {
                 error!("Unable to create pinger, please check capabilities");
-            }).and_then(move |pinger| http::server(settings, pinger));
+            })
+            .and_then(move |pinger| http::server(settings, pinger));
 
         let signals_future = signals().map_err(|_| {
             error!("Signal handling error");
