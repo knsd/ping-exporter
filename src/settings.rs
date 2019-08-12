@@ -1,6 +1,6 @@
 use std::env;
 use std::fmt;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -24,6 +24,10 @@ impl fmt::Display for Settings {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "listen address: {}, ", self.listen)?;
         write!(f, "preferred protocol: {}, ", self.protocol)?;
+        match self.resolver {
+            Some(resolver) => write!(f, "resolver: {}, ", resolver)?,
+            None => write!(f, "resolver: system, ")?,
+        }
         write!(f, "default number of ICMP packets: {}, ", self.count)?;
         write!(f, "maximum number of ICMP packets: {}, ", self.max_count)?;
         write!(
@@ -50,6 +54,7 @@ impl fmt::Display for Settings {
 pub struct SettingsInner {
     pub listen: SocketAddr,
     pub protocol: Protocol,
+    pub resolver: Option<IpAddr>,
     pub count: usize,
     pub max_count: usize,
     pub ping_timeout: u64,
@@ -64,6 +69,11 @@ impl Settings {
             inner: Arc::new(SettingsInner {
                 listen: get_env_or("LISTEN", DEFAULT_LISTEN.clone())?,
                 protocol: get_env_or("DEFAULT_PROTOCOL", Protocol::V4)?,
+                resolver: match get_env_("RESOLVER") {
+                    Ok(resolver) => Some(resolver),
+                    Err(Error::MissingEnvVar { .. }) => None,
+                    Err(err) => return Err(err.into()),
+                },
                 count: get_env_or("DEFAULT_COUNT", 5)?,
                 max_count: get_env_or("MAX_COUNT", 30)?,
                 ping_timeout: get_env_or("DEFAULT_PING_TIMEOUT", 1000)?,

@@ -21,6 +21,7 @@ Visiting [http://localhost:9346/ping?target=google.com](http://localhost:9346/pi
 | -------------------------------------- | ------------- |
 | PING_EXPORTER_LISTEN                   | [::]:9346     |
 | PING_EXPORTER_DEFAULT_PROTOCOL         | v4            |
+| PING_EXPORTER_RESOLVER                 | system        |
 | PING_EXPORTER_DEFAULT_COUNT            | 5             |
 | PING_EXPORTER_MAX_COUNT                | 30            |
 | PING_EXPORTER_DEFAULT_PING_TIMEOUT     | 1000          |

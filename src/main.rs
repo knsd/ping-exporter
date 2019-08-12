@@ -84,7 +84,7 @@ fn run() -> i32 {
     let (stop_sender, stop_receiver) = oneshot::channel();
 
     runtime.spawn(futures::lazy(move || {
-        let server_future = pinger::Pinger::new()
+        let server_future = pinger::Pinger::new(settings.clone())
             .map_err(|_| {
                 error!("Unable to create pinger, please check capabilities");
             }).and_then(move |pinger| http::server(settings, pinger));

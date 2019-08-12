@@ -1,10 +1,12 @@
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use futures::{future, Future};
 use rand::{thread_rng, Rng};
+use trust_dns_resolver::config::{self, ResolverConfig, NameServerConfig, ResolverOpts};
 use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
 use trust_dns_resolver::ResolverFuture;
 
+use settings::Settings;
 use utils::{boxed, NameOrIpAddr, Protocol};
 
 pub struct Resolver {
@@ -30,8 +32,19 @@ impl From<ResolveError> for Error {
 }
 
 impl Resolver {
-    pub fn new() -> impl Future<Item = Self, Error = Error> {
-        let future = future::result(ResolverFuture::from_system_conf()).flatten();
+    pub fn new(settings: Settings) -> impl Future<Item = Self, Error = Error> {
+        let future = future::result(match settings.resolver {
+            Some(resolver_addr) => {
+                let mut config = ResolverConfig::new();
+                config.add_name_server(NameServerConfig {
+                    socket_addr: SocketAddr::new(resolver_addr, 53),
+                    protocol: config::Protocol::Udp,
+                    tls_dns_name: None,
+                });
+                Ok(ResolverFuture::new(config, ResolverOpts::default()))
+            },
+            None => ResolverFuture::from_system_conf(),
+        }).flatten();
 
         future
             .map_err(From::from)

@@ -8,6 +8,7 @@ use tokio::timer::Deadline;
 use tokio_ping::{Error as PingError, Pinger as LowLevelPinger};
 
 use resolver::{Error as ResolveError, Resolver};
+use settings::Settings;
 use utils::{NameOrIpAddr, Protocol};
 
 #[derive(Debug, Fail)]
@@ -52,8 +53,8 @@ struct PingerInner {
 }
 
 impl Pinger {
-    pub fn new() -> impl Future<Item = Self, Error = Error> {
-        let resolver_future = Resolver::new().map_err(From::from);
+    pub fn new(settings: Settings) -> impl Future<Item = Self, Error = Error> {
+        let resolver_future = Resolver::new(settings).map_err(From::from);
         let pinger_future = LowLevelPinger::new().map_err(From::from);
         resolver_future
             .join(pinger_future)
