@@ -1,4 +1,4 @@
-FROM ekidd/rust-musl-builder:1.36.0 as builder
+FROM ekidd/rust-musl-builder:1.45.2 as builder
 
 COPY Cargo.toml Makefile ./
 COPY src/ ./src/
